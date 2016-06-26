@@ -10,23 +10,43 @@
 #define F1ALTENTERF12_API __declspec(dllimport) 
 #endif
 
+int disableF1 = 1;
+int disableF12 = 1;
+int disableAltEnter = 1;
+
 F1ALTENTERF12_API LRESULT CALLBACK messageHandling(int nCode, WPARAM wParam, LPARAM lParam) {
 	BYTE keyboardState[256];
 	GetKeyboardState(keyboardState);
-	keyboardState[VK_F12] = 0;
-	SetKeyboardState(keyboardState);
-	
-	if (wParam == VK_F12)
-		return 0;
-	if (wParam == VK_F1)
-		return 1;
-	if (wParam == VK_RETURN && keyboardState[VK_MENU] != 0)
-		return 1;
+
+	// Disable F12.
+	if (disableF12) {
+		keyboardState[VK_F12] = 0;
+		SetKeyboardState(keyboardState);
+
+		if (wParam == VK_F12)
+			return 0;
+	}
+
+	// Disable F1.
+	if (disableF1) {
+		if (wParam == VK_F1)
+			return 1;
+	}
+
+	// Disable Alt+Enter.
+	if (disableAltEnter) {
+		if (wParam == VK_RETURN && keyboardState[VK_MENU] != 0)
+			return 1;
+	}
 
 	return CallNextHookEx(0, nCode, wParam, lParam);
 }
 
-F1ALTENTERF12_API void hook() {
+F1ALTENTERF12_API void hook(int f1, int f12, int altEnter) {
+	disableF1 = f1;
+	disableF12 = f12;
+	disableAltEnter = altEnter;
+
 	HOOKPROC hookProc;
 	static HINSTANCE hinstDLL;
 	static HHOOK hhook;;
